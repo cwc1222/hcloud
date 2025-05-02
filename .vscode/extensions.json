@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "HashiCorp.terraform",
+        "redhat.ansible",
+        "bierner.markdown-preview-github-styles",
+        "joffreykern.markdown-toc",
+        "mhutchie.git-graph"
+    ]
+}

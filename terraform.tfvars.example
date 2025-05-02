@@ -1,0 +1,16 @@
+hcloud_token=""
+ssh_pubkey=""
+ssh_user="cwc1222"
+server_name="k3s-master"
+location_zone="eu-central"
+location="fsn1"
+datacenter="fsn1-dc14"
+image="debian-12"
+server_type="cx22"
+labels={
+    "group" = "k3s-cluster"
+    "role" = "master"
+    "domain" = "chenantunez.com"
+}
+firewall_name="Catopia Firewall"
+network_name="Catopia Network"
