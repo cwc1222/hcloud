@@ -1,7 +1,15 @@
 #cloud-config
+fqdn: ${fqdn}
+hostname: ${hostname}
+locale: ${locale}
+timezone: ${timezone}
+chpasswd: { expire: False }
+
 users:
   - name: ${ssh_user}
     groups: sudo
+    password: ${ssh_password}
+    lock_passwd: false
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
@@ -17,8 +25,38 @@ packages:
   - htop
   - tmux
 
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-custom-ssh.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      AllowUsers ${ssh_user}
+
 runcmd:
-  - sed -ie '/^PermitRootLogin/s/^.*$/PermitRootLogin no/' /etc/ssh/sshd_config
-  - sed -ie '/^PasswordAuthentication/s/^.*$/PasswordAuthentication no/' /etc/ssh/sshd_config
-  - sed -i '$a AllowUsers ${ssh_user}' /etc/ssh/sshd_config
+  # Delete all cloud-init SSH config fragments that could override the settings
+  - find /etc/ssh/sshd_config.d/ -type f -name '*cloud-init*.conf' -exec rm -f {} \;
   - systemctl restart ssh
+  # Install postgresql
+  - |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+  - |
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+  - apt-get update
+  - apt-get install -y postgresql-17
+  - systemctl enable postgresql
+  - systemctl start postgresql
+  - |
+    sudo -u postgres psql -c "CREATE USER ${ssh_user} SUPERUSER;"
+  - sudo -u postgres createdb k3s
+  - sudo -u postgres createdb terraform
+  - sudo -u postgres createdb vaultwarden
+  - |
+    sed -i '/^host[[:space:]]\+all[[:space:]]\+all[[:space:]]\+127\.0\.0\.1\/32[[:space:]]\+scram-sha-256$/c\host   all   all   127.0.0.1/32   trust' /etc/postgresql/17/main/pg_hba.conf
+    sed -i '/^host[[:space:]]\+all[[:space:]]\+all[[:space:]]\+::1\/128[[:space:]]\+scram-sha-256$/c\host   all   all   ::1/128   trust' /etc/postgresql/17/main/pg_hba.conf
+  - systemctl restart postgresql
+  # Install k3s
+  - |
+    curl -sfL https://get.k3s.io | sh -s - --datastore-endpoint="postgres://postgres@localhost/k3s"
+  - chown ${ssh_user}:${ssh_user} /etc/rancher/k3s/k3s.yaml
+  - chown ${ssh_user}:${ssh_user} /var/lib/rancher/k3s/server/node-token
+  - reboot

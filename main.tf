@@ -5,6 +5,8 @@ terraform {
       version = "1.50.1"
     }
   }
+
+  backend "pg" {}
 }
 
 variable "hcloud_token" {
@@ -21,6 +23,33 @@ variable "ssh_pubkey" {
 variable "ssh_user" {
   type = string
   description = "SSH User"
+}
+
+variable "ssh_password" {
+  type = string
+  description = "SSH Password"
+}
+
+variable "cloud_init_fqdn" {
+  type = string
+  description = "Cloud-Init FQDN"
+}
+
+variable "cloud_init_hostname" {
+  type = string
+  description = "Cloud-Init Hostname"
+}
+
+variable "cloud_init_locale" {
+  type = string
+  default = "en_US.UTF-8"
+  description = "Cloud-Init Locale"
+}
+
+variable "cloud_init_timezone" {
+  type = string
+  default = "Etc/UTC"
+  description = "Cloud-Init Timezone"
 }
 
 variable "server_name" {
@@ -48,13 +77,6 @@ variable "location_zone" {
   type = string
   default = "eu-central"
   description = "Location Zone"
-}
-
-variable "location" {
-  # hcloud location list
-  type = string
-  default = "fsn1"
-  description = "Location"
 }
 
 variable "datacenter" {
@@ -129,10 +151,18 @@ resource "hcloud_network_subnet" "subnet" {
   ip_range = "10.0.1.0/24"
 }
 
-resource "hcloud_primary_ip" "primary_ip" {
-  name = "chenantunez.com"
+resource "hcloud_primary_ip" "primary_ip_ipv4" {
+  name = "chenantunez.com.ipv4"
   datacenter = var.datacenter
   type = "ipv4"
+  assignee_type = "server"
+  auto_delete = true
+}
+
+resource "hcloud_primary_ip" "primary_ip_ipv6" {
+  name = "chenantunez.com.ipv6"
+  datacenter = var.datacenter
+  type = "ipv6"
   assignee_type = "server"
   auto_delete = true
 }
@@ -141,20 +171,25 @@ resource "hcloud_server" "server" {
   name = var.server_name
   image = var.image
   server_type = var.server_type
-  location = var.location
   datacenter = var.datacenter
   firewall_ids = [hcloud_firewall.firewall.id]
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_pubkey = var.ssh_pubkey
     ssh_user = var.ssh_user
+    ssh_password = var.ssh_password
+    fqdn = var.cloud_init_fqdn
+    hostname = var.cloud_init_hostname
+    locale = var.cloud_init_locale
+    timezone = var.cloud_init_timezone
   })
 
   labels = var.labels
 
   public_net {
     ipv4_enabled = true
-    ipv4 = hcloud_primary_ip.primary_ip.id
+    ipv4 = hcloud_primary_ip.primary_ip_ipv4.id
     ipv6_enabled = true
+    ipv6 = hcloud_primary_ip.primary_ip_ipv6.id
   }
 
   network {
@@ -167,17 +202,17 @@ resource "hcloud_server" "server" {
 
 output "server_location" {
   description = "Server Location and Zone"
-  value = "zone: ${var.location_zone}, location: ${var.location}, datacenter: ${var.datacenter}"
+  value = "zone: ${var.location_zone}, datacenter: ${var.datacenter}"
 }
 
 output "server_ipv4" {
   description = "Server IPv4"
-  value = hcloud_server.server.ipv4
+  value = hcloud_primary_ip.primary_ip_ipv4.ip_address
 }
 
 output "server_ipv6" {
   description = "Server IPv6"
-  value = hcloud_server.server.ipv6
+  value = hcloud_primary_ip.primary_ip_ipv6.ip_address
 }
 
 output "server_ssh_user" {

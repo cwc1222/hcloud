@@ -1,6 +1,13 @@
 # hcloud
 VPS management on Hetzner Cloud
 
+## Quick Start
+
+```bash
+export PG_CONN_STR=postgres://user:pass@db.example.com/terraform
+terraform init
+```
+
 ## How to find available images
 
 1. Use curl
