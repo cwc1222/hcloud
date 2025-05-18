@@ -1,7 +1,8 @@
 hcloud_token=""
+cloudflare_api_token=""
+
 ssh_pubkey=""
 ssh_user="cwc1222"
-ssh_password=""
 cloud_init_fqdn=""
 cloud_init_hostname="catopia"
 cloud_init_locale="en_US.UTF-8"

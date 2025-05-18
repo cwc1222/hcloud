@@ -4,8 +4,13 @@ VPS management on Hetzner Cloud
 ## Quick Start
 
 ```bash
-export PG_CONN_STR=postgres://user:pass@db.example.com/terraform
-terraform init
+# Install wrangler to interact with cloudflare
+bun install
+
+# export PG_CONN_STR=postgres://user:pass@db.example.com/terraform
+# terraform init
+
+terraform init -backend-config=backend.hcl
 ```
 
 ## How to find available images
@@ -40,3 +45,7 @@ hcloud image list -t system -a x86
 - [community.hetzner.com/tutorials/setup-your-own-scalable-kubernetes-cluster](https://community.hetzner.com/tutorials/setup-your-own-scalable-kubernetes-cluster)
 - [scottspence.com/posts/setting-up-my-vps-on-hetzner](https://scottspence.com/posts/setting-up-my-vps-on-hetzner)
 - [github.com/hetznercloud/cli](https://github.com/hetznercloud/cli)
+- [registry.terraform.io/providers/cloudflare/cloudflare/latest/docs](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
+- [developers.cloudflare.com/workers/wrangler/install-and-update](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+- [developers.cloudflare.com/terraform/advanced-topics/remote-backend](https://developers.cloudflare.com/terraform/advanced-topics/remote-backend/)
+- [medium.com/@GarisSpace/terraform-state-management-integrating-cloudflare-r2](https://medium.com/@GarisSpace/terraform-state-management-integrating-cloudflare-r2-b2e82798896d)

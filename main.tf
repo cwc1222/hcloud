@@ -2,11 +2,36 @@ terraform {
   required_providers {
     hcloud = {
       source = "hetznercloud/hcloud"
-      version = "1.50.1"
+      version = "~> 1.50"
+    }
+
+    cloudflare = {
+      source = "cloudflare/cloudflare"
+      version = "~> 5"
     }
   }
 
-  backend "pg" {}
+  backend "s3" {
+    bucket = "tf-state"
+    key = "terraform.tfstate"
+    region = "auto"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+  }
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
+variable "cloudflare_api_token" {
+  sensitive = true
+  type = string
+  description = "Cloudflare API Token"
 }
 
 variable "hcloud_token" {
@@ -23,11 +48,6 @@ variable "ssh_pubkey" {
 variable "ssh_user" {
   type = string
   description = "SSH User"
-}
-
-variable "ssh_password" {
-  type = string
-  description = "SSH Password"
 }
 
 variable "cloud_init_fqdn" {
@@ -176,7 +196,6 @@ resource "hcloud_server" "server" {
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_pubkey = var.ssh_pubkey
     ssh_user = var.ssh_user
-    ssh_password = var.ssh_password
     fqdn = var.cloud_init_fqdn
     hostname = var.cloud_init_hostname
     locale = var.cloud_init_locale

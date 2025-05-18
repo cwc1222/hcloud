@@ -1,0 +1,14 @@
+{
+	"name": "terraform",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"create": "wrangler r2 bucket create tf-state",
+		"delete": "wrangler r2 bucket delete tf-state",
+		"list": "wrangler r2 bucket list",
+		"info": "wrangler r2 bucket info tf-state"
+	},
+	"devDependencies": {
+		"wrangler": "^4.15.2"
+	}
+}

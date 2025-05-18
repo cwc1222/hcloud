@@ -8,8 +8,7 @@ chpasswd: { expire: False }
 users:
   - name: ${ssh_user}
     groups: sudo
-    password: ${ssh_password}
-    lock_passwd: false
+    lock_passwd: true
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
