@@ -1,6 +1,5 @@
+// Hetzner Cloud
 hcloud_token=""
-cloudflare_api_token=""
-
 ssh_pubkey=""
 ssh_user="cwc1222"
 cloud_init_fqdn=""
@@ -19,3 +18,10 @@ labels={
 }
 firewall_name="Catopia Firewall"
 network_name="Catopia Network"
+
+# Cloudflare DNS
+cloudflare_api_token_dns=""
+domain="chenantunez.com"
+dns_ttl=3600
+dkim_selector=""
+dkim_pubkey=""
