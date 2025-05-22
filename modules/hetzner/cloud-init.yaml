@@ -3,7 +3,6 @@ fqdn: ${fqdn}
 hostname: ${hostname}
 locale: ${locale}
 timezone: ${timezone}
-chpasswd: { expire: False }
 
 users:
   - name: ${ssh_user}
@@ -42,20 +41,36 @@ runcmd:
     curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
   - apt-get update
   - apt-get install -y postgresql-17
+  - chage -E -1 postgres || true
+  - apt-get install -y postgresql-17
   - systemctl enable postgresql
   - systemctl start postgresql
   - |
-    sudo -u postgres psql -c "CREATE USER ${ssh_user} SUPERUSER;"
-  - sudo -u postgres createdb k3s
-  - sudo -u postgres createdb terraform
-  - sudo -u postgres createdb vaultwarden
+    echo "Waiting for PostgreSQL to be ready..."
+    for i in {1..20}; do
+      pg_isready && break
+      echo "PostgreSQL not ready yet, retrying in 2s..."
+      sleep 2
+    done
   - |
-    sed -i '/^host[[:space:]]\+all[[:space:]]\+all[[:space:]]\+127\.0\.0\.1\/32[[:space:]]\+scram-sha-256$/c\host   all   all   127.0.0.1/32   trust' /etc/postgresql/17/main/pg_hba.conf
-    sed -i '/^host[[:space:]]\+all[[:space:]]\+all[[:space:]]\+::1\/128[[:space:]]\+scram-sha-256$/c\host   all   all   ::1/128   trust' /etc/postgresql/17/main/pg_hba.conf
+    su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='${ssh_user}'\"" | grep -q 1 || \
+    su - postgres -c "psql -c \"CREATE USER ${ssh_user} SUPERUSER;\""
+  - |
+    su - postgres -c "psql -c \"ALTER USER ${ssh_user} WITH PASSWORD '${postgres_password}';\""
+  - |
+    su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw k3s || createdb k3s"
+  - |
+    su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw vaultwarden || createdb vaultwarden"
+  - |
+    sed -i '/127\.0\.0\.1\/32/ s/scram-sha-256/trust/' /etc/postgresql/17/main/pg_hba.conf || \
+    echo "host all all 127.0.0.1/32 trust" >> /etc/postgresql/17/main/pg_hba.conf
+  - |
+    sed -i '/::1\/128/ s/scram-sha-256/trust/' /etc/postgresql/17/main/pg_hba.conf || \
+    echo "host all all ::1/128 trust" >> /etc/postgresql/17/main/pg_hba.conf
   - systemctl restart postgresql
   # Install k3s
   - |
-    curl -sfL https://get.k3s.io | sh -s - --datastore-endpoint="postgres://postgres@localhost/k3s"
+    curl -sfL https://get.k3s.io | sh -s - --datastore-endpoint="postgres://${ssh_user}:${postgres_password}@localhost/k3s"
   - chown ${ssh_user}:${ssh_user} /etc/rancher/k3s/k3s.yaml
   - chown ${ssh_user}:${ssh_user} /var/lib/rancher/k3s/server/node-token
-  - reboot
+  - echo "Cloud-init finished provisioning" > /var/log/cloud-init.done

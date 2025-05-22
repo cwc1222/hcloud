@@ -8,6 +8,12 @@ variable "ssh_user" {
   description = "SSH User"
 }
 
+variable "postgres_password" {
+  sensitive = true
+  type = string
+  description = "PostgreSQL Password"
+}
+
 variable "cloud_init_fqdn" {
   type = string
   description = "Cloud-Init FQDN"

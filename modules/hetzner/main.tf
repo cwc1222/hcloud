@@ -78,6 +78,7 @@ resource "hcloud_server" "server" {
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_pubkey = var.ssh_pubkey
     ssh_user = var.ssh_user
+    postgres_password = var.postgres_password
     fqdn = var.cloud_init_fqdn
     hostname = var.cloud_init_hostname
     locale = var.cloud_init_locale

@@ -6,11 +6,19 @@ VPS management on Hetzner Cloud
 ```bash
 # Install wrangler to interact with cloudflare
 bun install
+# Create the R2 bucket to store the terraform state
+bun run create
 
 # export PG_CONN_STR=postgres://user:pass@db.example.com/terraform
 # terraform init
 
+# Remember to fill the cloudflare R2 bucket info in backend.hcl
+# bun run create // create r2 bucket tokens
+# cp backend.hcl.example backend.hcl // fill the previous output secrets to this file
 terraform init -backend-config=backend.hcl
+terraform plan
+terraform apply
+terraform destroy
 ```
 
 ## How to find available images

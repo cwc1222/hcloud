@@ -37,6 +37,7 @@ module "hetzner" {
 
   ssh_pubkey = var.ssh_pubkey
   ssh_user = var.ssh_user
+  postgres_password = var.postgres_password
   cloud_init_fqdn = var.cloud_init_fqdn
   cloud_init_hostname = var.cloud_init_hostname
   cloud_init_locale = var.cloud_init_locale
@@ -51,12 +52,29 @@ module "hetzner" {
   network_name = var.network_name
 }
 
+data "cloudflare_zone" "domain" {
+  filter = {
+    name = var.domain
+  }
+}
+
+data "hcloud_primary_ip" "primary_ip_ipv4" {
+  name = "${var.domain}.ipv4"
+  depends_on = [ module.hetzner ]
+}
+
+data "hcloud_primary_ip" "primary_ip_ipv6" {
+  name = "${var.domain}.ipv6"
+  depends_on = [ module.hetzner ]
+}
+
 module "cloudflare" {
   source = "./modules/cloudflare"
 
-  domain = var.domain
+  hetzner_ipv4 = data.hcloud_primary_ip.primary_ip_ipv4.ip_address
+  hetzner_ipv6 = data.hcloud_primary_ip.primary_ip_ipv6.ip_address
+  zone_id = data.cloudflare_zone.domain.zone_id
   subdomains = ["catopia", "vw"]
-  dns_ttl = var.dns_ttl
   dkim_selector = var.dkim_selector
   dkim_pubkey = var.dkim_pubkey
   depends_on = [ module.hetzner ]
