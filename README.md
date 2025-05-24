@@ -42,6 +42,31 @@ hcloud context create <ur-project-name>
 hcloud image list -t system -a x86
 ```
 
+## SSH Tunnels
+
+To access the remote Postgres and K3S cluster without modifying the firewall rules,
+which only open 80, 443, and ssh for security concerns, we can use the ssh tunnel
+enabling the connection from the local machine to the remote services.
+
+The *sshtunnels* folder has the systemd configurations and installation bash, following
+the commands will install the systemd services.
+
+```bash
+cd sshtunnels/
+# Ensure the SSH_USER and REMOTE_HOST are configured in tne env
+# e.g., 
+# - export SSH_USER=xxx
+# - export REMOTE_HOST=xxx
+bash install_tunnel.sh
+
+# Check the install services
+systemctl status --user postgres-tunnel.service
+systemctl status --user k3s-ssh-tunnel.service
+# To see the logs
+journalctl --user --unit=postgres-tunnel.service --no-pager
+journalctl --user --unit=k3s-ssh-tunnel.service --no-pager
+```
+
 ## Reference
 
 - [developer.hashicorp.com/terraform/intro](https://developer.hashicorp.com/terraform/intro)

@@ -4,6 +4,7 @@
         "redhat.ansible",
         "bierner.markdown-preview-github-styles",
         "joffreykern.markdown-toc",
-        "mhutchie.git-graph"
+        "mhutchie.git-graph",
+        "coolbear.systemd-unit-file"
     ]
 }

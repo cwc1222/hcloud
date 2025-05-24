@@ -1,0 +1,21 @@
+[Unit]
+Description=SSH tunnel to K3s server (port 6443)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/ssh -v \
+    -o ServerAliveInterval=60 \
+    -o ServerAliveCountMax=3 \
+    -o ExitOnForwardFailure=yes \
+    -o StrictHostKeyChecking=accept-new \
+    -i /home/{{.LOCAL_USER}}/.ssh/id_ed25519_hetzner \
+    -L 15432:localhost:5432 \
+    -N {{.Env.SSH_USER}}@{{.Env.REMOTE_HOST}}
+Restart=always
+RestartSec=5
+# Prevent SSH asking for confirmation or passphrase
+Environment="SSH_AUTH_SOCK=%t/ssh-agent.socket"
+
+[Install]
+WantedBy=default.target
