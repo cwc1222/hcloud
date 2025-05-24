@@ -13,7 +13,7 @@ terraform {
 
   backend "s3" {
     bucket = "tf-state"
-    key = "terraform.tfstate"
+    key = "hcloud.tfstate"
     region = "auto"
     skip_credentials_validation = true
     skip_metadata_api_check     = true
@@ -52,12 +52,6 @@ module "hetzner" {
   network_name = var.network_name
 }
 
-data "cloudflare_zone" "domain" {
-  filter = {
-    name = var.domain
-  }
-}
-
 data "hcloud_primary_ip" "primary_ip_ipv4" {
   name = "${var.domain}.ipv4"
   depends_on = [ module.hetzner ]
@@ -68,6 +62,12 @@ data "hcloud_primary_ip" "primary_ip_ipv6" {
   depends_on = [ module.hetzner ]
 }
 
+data "cloudflare_zone" "domain" {
+  filter = {
+    name = var.domain
+  }
+}
+
 module "cloudflare" {
   source = "./modules/cloudflare"
 
@@ -75,7 +75,5 @@ module "cloudflare" {
   hetzner_ipv6 = data.hcloud_primary_ip.primary_ip_ipv6.ip_address
   zone_id = data.cloudflare_zone.domain.zone_id
   subdomains = ["catopia", "vw"]
-  dkim_selector = var.dkim_selector
-  dkim_pubkey = var.dkim_pubkey
   depends_on = [ module.hetzner ]
 }

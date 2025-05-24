@@ -11,23 +11,6 @@ variable "domain" {
   description = "Domain name"
 }
 
-variable "dns_ttl" {
-  type = number
-  description = "DNS TTL"
-  default = 3600
-}
-
-variable "dkim_selector" {
-  type = string
-  description = "DKIM selector"
-}
-
-variable "dkim_pubkey" {
-  type = string
-  description = "DKIM public key"
-}
-
-
 // Hetzner Cloud
 
 variable "hcloud_token" {
